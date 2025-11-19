@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"main/internal/controller"
 	"main/internal/model"
@@ -17,10 +18,11 @@ const (
 type ChatOperationsHandler struct {
 	bot *telebot.Bot
 	cc  *controller.ChatController
+	lc  *controller.LlmController
 }
 
-func NewChatOperationsHandler(bot *telebot.Bot, cc *controller.ChatController) *ChatOperationsHandler {
-	return &ChatOperationsHandler{bot: bot, cc: cc}
+func NewChatOperationsHandler(bot *telebot.Bot, cc *controller.ChatController, lc *controller.LlmController) *ChatOperationsHandler {
+	return &ChatOperationsHandler{bot: bot, cc: cc, lc: lc}
 }
 
 func (coh *ChatOperationsHandler) SetupHandlers() {
@@ -30,6 +32,7 @@ func (coh *ChatOperationsHandler) SetupHandlers() {
 	coh.bot.Handle(&telebot.Callback{Data: controller.BtnDescribePersonality}, coh.handleDescribePersonality)
 	coh.bot.Handle(&telebot.Callback{Data: controller.BtnMeetingSearch}, coh.handleMeetingSearch)
 	coh.bot.Handle(&telebot.Callback{Data: controller.BtnContextSearch}, coh.handleContextSearch)
+	coh.bot.Handle(telebot.OnText, coh.handleText)
 }
 
 func dropUserToRootMenu(c telebot.Context, err error) error {
@@ -116,14 +119,36 @@ func (coh *ChatOperationsHandler) handleText(c telebot.Context) error {
 			return err
 		}
 
+		model.UserStates.Store(telegramUser.ID, model.UserData{State: model.StateRootMenu})
+
 		return c.Send("Название чата успешно изменено на " + newName)
 	case model.StateNameForChatAwaiting:
-		newName := c.Text()
-		ok, err := regexp.MatchString(`^[a-zA-Z0-9\s]+$`, newName)
+		name := c.Text()
+		ok, err := regexp.MatchString(`^[a-zA-Z0-9\s]+$`, name)
 		if err != nil || !ok {
 			return c.Send("Название не соответствует требованиям, попробуйте другое:")
 		}
 
+		model.UserStates.Store(telegramUser.ID, model.UserData{State: model.StateFileOfChatAwaiting, NewChatName: name})
+
+		return c.Send("Прикрепите один файл чата в формате .html:")
+	case model.StateDescriptionForContextSearchAwaiting:
+		description := c.Text() // does it need regexp (?)
+
+		selectedChat, err := coh.cc.GetChat(userData.SelectedChatId)
+		if err != nil {
+			return dropUserToRootMenu(c, err)
+		}
+
+		answer, err := coh.lc.ContextSearch(context.TODO(), *selectedChat, description)
+		if err != nil {
+			return dropUserToRootMenu(c, err)
+		}
+
+		c.Send(fmt.Sprintf("Результаты поиска контекста:\n%s", answer))
+		return dropUserToRootMenu(c, nil)
+	default:
+		return dropUserToRootMenu(c, fmt.Errorf(UnexpectedUserState))
 	}
 }
 
