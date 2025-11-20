@@ -18,7 +18,8 @@ const (
 	StateNameForChatAwaiting // bot asks user for chat name
 	StateFileOfChatAwaiting  // bot asks user for file
 
-	StateChatSelected // user selected chat
+	StateChatSelectionAwaiting // bot asks user for chat selecting
+	StateChatSelected          // user selected chat
 
 	StateChatAnalyzationSelected // user selected analyzation of chat
 	// StateDateBoundsForSummarizingAwaiting    // bot asks user for date bounds of summarizing
