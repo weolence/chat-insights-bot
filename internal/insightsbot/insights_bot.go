@@ -49,7 +49,7 @@ func NewInsightsBot() (*InsightsBot, error) {
 		return nil, err
 	}
 
-	chatOperationsHandler := handler.NewChatOperationsHandler(bot, chatController, llmController)
+	chatOperationsHandler := handler.NewChatOperationsHandler(bot, chatController, llmController, userController)
 
 	return &InsightsBot{commandsHandler, chatOperationsHandler, bot}, nil
 }
