@@ -153,7 +153,25 @@ func (coh *ChatOperationsHandler) handleText(c telebot.Context) error {
 }
 
 func (coh *ChatOperationsHandler) handleSummarizeChat(c telebot.Context) error {
+	telegramUser := c.Sender()
+	userData, ok := getUserData(telegramUser.ID)
+	if !ok {
+		return dropUserToRootMenu(c, fmt.Errorf(UserDataConversionErr))
+	}
 
+	selectedChat, err := coh.cc.GetChat(userData.SelectedChatId)
+	if err != nil {
+		return dropUserToRootMenu(c, err)
+	}
+
+	if userData.State != model.StateChatAnalyzationSelected {
+		return dropUserToRootMenu(c, fmt.Errorf(UnexpectedUserState))
+	}
+
+	model.UserStates.Store(telegramUser.ID, model.UserData{State: model.StateRootMenu})
+
+	c.Send(coh.lc.SummarizeChat(context.TODO(), *selectedChat))
+	return dropUserToRootMenu(c, nil)
 }
 
 func (coh *ChatOperationsHandler) handleDescribePersonality(c telebot.Context) error {

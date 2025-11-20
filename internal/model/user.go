@@ -20,8 +20,8 @@ const (
 
 	StateChatSelected // user selected chat
 
-	StateChatAnalyzationSelected             // user selected analyzation of chat
-	StateDateBoundsForSummarizingAwaiting    // bot asks user for date bounds of summarizing
+	StateChatAnalyzationSelected // user selected analyzation of chat
+	// StateDateBoundsForSummarizingAwaiting    // bot asks user for date bounds of summarizing
 	StateDescriptionForContextSearchAwaiting // bot asks user for description of context
 
 	StateChatSettingsSelected   // user selected settings of chat

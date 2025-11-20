@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"main/internal/model"
 	"os"
-	"time"
 
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
@@ -33,14 +32,11 @@ func NewLlmController() (*LlmController, error) {
 	return &LlmController{client: &client}, nil
 }
 
-func (lc *LlmController) SummarizeChat(ctx context.Context, chat model.Chat, periodStart time.Time, periodEnd time.Time) (string, error) {
+func (lc *LlmController) SummarizeChat(ctx context.Context, chat model.Chat) (string, error) {
 	data, err := os.ReadFile(chat.Filepath)
 	if err != nil {
 		return "", err
 	}
-
-	startStr := periodStart.Format("02-01-2006")
-	endStr := periodEnd.Format("02-01-2006")
 
 	chatCompletion, err := lc.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
 		Model: openai.ChatModelGPT4o,
@@ -52,9 +48,9 @@ func (lc *LlmController) SummarizeChat(ctx context.Context, chat model.Chat, per
 				Стиль деловой, структурированный, с акцентом на ключевые моменты.
 			`),
 			openai.UserMessage(fmt.Sprintf("Вот переписка для анализа:\n\n%s", string(data))),
-			openai.UserMessage(fmt.Sprintf(`
+			openai.UserMessage(`
 				Составь краткое и чёткое резюме всех тем обсуждений,
-				которые происходили в чате за период с %s по %s.
+				которые происходили в чате.
 
 				Требования:
 				- представь ответ в виде списка;
@@ -64,7 +60,6 @@ func (lc *LlmController) SummarizeChat(ctx context.Context, chat model.Chat, per
 				- не используй вводные фразы типа "Понял" или "Вот анализ".
 
 				Пиши только анализ.`,
-				startStr, endStr),
 			),
 		},
 	})
