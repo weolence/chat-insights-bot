@@ -8,11 +8,11 @@ import (
 )
 
 const (
-	BtnImportChat          = "import_chat_btn"
-	BtnSelectChat          = "select_chat_btn"
-	BtnChatAnalyzation     = "chat_analyzation_btn"
-	BtnChatSettings        = "chat_settings_btn"
-	BtnStopAnalyzing       = "stop_analyzing_btn"
+	BtnImportChat      = "import_chat_btn"
+	BtnSelectChat      = "select_chat_btn"
+	BtnChatAnalyzation = "chat_analyzation_btn"
+	BtnChatSettings    = "chat_settings_btn"
+	// BtnStopAnalyzing       = "stop_analyzing_btn"
 	BtnSummarizeChat       = "summarize_chat_btn"
 	BtnDescribePersonality = "describe_personality_btn"
 	BtnMeetingSearch       = "meeting_search_btn"
@@ -52,14 +52,14 @@ func CreateAvailableChatInteractions() (menu *telebot.ReplyMarkup) {
 func CreateAvailableAnalysisMethods() (menu *telebot.ReplyMarkup) {
 	menu = &telebot.ReplyMarkup{}
 
-	btnStopAnalyzing := menu.Data("Stop analyzing", BtnStopAnalyzing)
+	// btnStopAnalyzing := menu.Data("Stop analyzing", BtnStopAnalyzing)
 	btnSummarizeChat := menu.Data("Summarize", BtnSummarizeChat)
 	btnDescribePersonality := menu.Data("Describe personality", BtnDescribePersonality)
 	btnMeetingSearch := menu.Data("Meeting search", BtnMeetingSearch)
 	btnContextSearch := menu.Data("Context search", BtnContextSearch)
 
 	menu.Inline(
-		menu.Row(btnStopAnalyzing),
+		// menu.Row(btnStopAnalyzing),
 		menu.Row(btnSummarizeChat),
 		menu.Row(btnDescribePersonality),
 		menu.Row(btnMeetingSearch),
