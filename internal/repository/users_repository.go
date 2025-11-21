@@ -3,6 +3,8 @@ package repository
 import (
 	"database/sql"
 	"main/internal/model"
+
+	_ "modernc.org/sqlite"
 )
 
 type UsersRepository struct {
@@ -31,7 +33,7 @@ func NewUsersRepository() (*UsersRepository, error) {
 	return &UsersRepository{db: db}, nil
 }
 
-func (ur *UsersRepository) AddUser(telegramId int64) error {
+func (ur *UsersRepository) CreateUser(telegramId int64) error {
 	_, err := ur.db.Exec(
 		"INSERT INTO users (telegram_id) VALUES (?)",
 		telegramId,
@@ -39,7 +41,7 @@ func (ur *UsersRepository) AddUser(telegramId int64) error {
 	return err
 }
 
-func (ur *UsersRepository) GetUser(telegramId int64) (*model.User, error) {
+func (ur *UsersRepository) IsUserRegistered(telegramId int64) (bool, error) {
 	row := ur.db.QueryRow(
 		"SELECT telegram_id FROM users WHERE telegram_id = ?",
 		telegramId,
@@ -48,12 +50,12 @@ func (ur *UsersRepository) GetUser(telegramId int64) (*model.User, error) {
 	var u model.User
 	err := row.Scan(&u.TelegramId)
 
-	switch err {
-	case nil:
-		return &u, nil
-	case sql.ErrNoRows:
-		return nil, nil
-	default:
-		return nil, err
+	if err == sql.ErrNoRows {
+		return false, nil
 	}
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }

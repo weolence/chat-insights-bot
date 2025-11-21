@@ -29,7 +29,7 @@ func NewChatController() (*ChatController, error) {
 	return &ChatController{chatsRepo: chatsRepo}, nil
 }
 
-func (cc *ChatController) CreateChat(userId int64, name string, file telebot.File) error {
+func (cc *ChatController) CreateChat(chatId string, userId int64, name string, file telebot.File) error {
 	resp, err := http.Get(file.FileURL)
 	if err != nil {
 		return err
@@ -52,7 +52,7 @@ func (cc *ChatController) CreateChat(userId int64, name string, file telebot.Fil
 		return err
 	}
 
-	err = cc.chatsRepo.AddChat(userId, name, path)
+	err = cc.chatsRepo.CreateChat(chatId, userId, name, path)
 	return err
 }
 

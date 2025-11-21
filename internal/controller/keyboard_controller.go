@@ -10,7 +10,7 @@ import (
 const (
 	BtnImportChat          = "import_chat_btn"
 	BtnSelectChat          = "select_chat_btn"
-	BtnAnalyzeChat         = "analyze_chat_btn"
+	BtnChatAnalyzation     = "chat_analyzation_btn"
 	BtnChatSettings        = "chat_settings_btn"
 	BtnStopAnalyzing       = "stop_analyzing_btn"
 	BtnSummarizeChat       = "summarize_chat_btn"
@@ -24,8 +24,8 @@ const (
 func CreateRootMenu() (menu *telebot.ReplyMarkup) {
 	menu = &telebot.ReplyMarkup{}
 
-	btnImportChat := menu.Data("Import chat", BtnImportChat)
-	btnSelectChat := menu.Data("Select chat", BtnSelectChat)
+	btnImportChat := menu.Data("Import chat", BtnImportChat, "")
+	btnSelectChat := menu.Data("Select chat", BtnSelectChat, "")
 
 	menu.Inline(
 		menu.Row(btnImportChat),
@@ -35,10 +35,10 @@ func CreateRootMenu() (menu *telebot.ReplyMarkup) {
 	return
 }
 
-func CreateAvailableChatInteractions(chat model.Chat) (menu *telebot.ReplyMarkup) {
+func CreateAvailableChatInteractions() (menu *telebot.ReplyMarkup) {
 	menu = &telebot.ReplyMarkup{}
 
-	btnAnalyzeChat := menu.Data("Analyze chat", BtnAnalyzeChat)
+	btnAnalyzeChat := menu.Data("Analyze chat", BtnChatAnalyzation)
 	btnChatSettings := menu.Data("Chat settings", BtnChatSettings)
 
 	menu.Inline(
@@ -49,7 +49,7 @@ func CreateAvailableChatInteractions(chat model.Chat) (menu *telebot.ReplyMarkup
 	return
 }
 
-func CreateAvailableAnalysisMethods(chat model.Chat) (menu *telebot.ReplyMarkup) {
+func CreateAvailableAnalysisMethods() (menu *telebot.ReplyMarkup) {
 	menu = &telebot.ReplyMarkup{}
 
 	btnStopAnalyzing := menu.Data("Stop analyzing", BtnStopAnalyzing)
@@ -69,7 +69,7 @@ func CreateAvailableAnalysisMethods(chat model.Chat) (menu *telebot.ReplyMarkup)
 	return
 }
 
-func CreateAvailableSettings(chat model.Chat) (menu *telebot.ReplyMarkup) {
+func CreateAvailableSettings() (menu *telebot.ReplyMarkup) {
 	menu = &telebot.ReplyMarkup{}
 
 	btnChangeName := menu.Data("Rename chat", BtnRenameChat)
@@ -92,7 +92,7 @@ func CreateImportedChats(chats []model.Chat) (menu *telebot.ReplyMarkup, err err
 
 	var chatButtons []telebot.Btn
 	for _, chat := range chats {
-		btn := menu.Data(chat.Name, fmt.Sprintf("chat_id_%d", chat.Id))
+		btn := menu.Data(chat.Name, fmt.Sprintf("chat_id_%s", chat.Id))
 		chatButtons = append(chatButtons, btn)
 	}
 

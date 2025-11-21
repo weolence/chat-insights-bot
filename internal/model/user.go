@@ -1,12 +1,5 @@
 package model
 
-import "sync"
-
-// structure for fetching already created users from database
-type User struct {
-	TelegramId int64 `json:"telegram_id"`
-}
-
 type UserState int
 
 const (
@@ -14,27 +7,23 @@ const (
 
 	StateRootMenu // user stands in root menu
 
-	StateChatImportSelected  // user pressed import chat
 	StateNameForChatAwaiting // bot asks user for chat name
 	StateFileOfChatAwaiting  // bot asks user for file
 
-	StateChatSelectionAwaiting // bot asks user for chat selecting
-	StateChatSelected          // user selected chat
+	StateChatSelectionAwaiting       // bot asks user for chat selecting
+	StateChatInteractionTypeAwaiting // user selected chat
 
-	StateChatAnalyzationSelected // user selected analyzation of chat
-	// StateDateBoundsForSummarizingAwaiting    // bot asks user for date bounds of summarizing
+	StateChatAnalyzationTypeAwaiting         // user selected analyzation of chat
 	StateDescriptionForContextSearchAwaiting // bot asks user for description of context
 
-	StateChatSettingsSelected   // user selected settings of chat
-	StateNewNameForChatAwaiting // bot asks user for new chat name
+	StateChatSettingsTypeAwaiting // user selected settings of chat
+	StateNewNameForChatAwaiting   // bot asks user for new chat name
 )
 
-// structure for keeping current user state
-type UserData struct {
-	State          UserState
-	SelectedChatId int64
-	NewChatName    string
+// structure for fetching already created users from database
+type User struct {
+	TelegramId   int64 `json:"telegram_id"`
+	State        UserState
+	SelectedChat *Chat
+	NewChatName  string
 }
-
-// map of user states: map[telegramUserId]UserData
-var UserStates sync.Map

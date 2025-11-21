@@ -3,6 +3,8 @@ package repository
 import (
 	"database/sql"
 	"main/internal/model"
+
+	_ "modernc.org/sqlite"
 )
 
 type ChatsRepository struct {
@@ -21,7 +23,7 @@ func NewChatsRepository() (*ChatsRepository, error) {
 
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS chats (
-			id BIGINT PRIMARY KEY AUTOINCREMENT,
+			id TEXT PRIMARY KEY,
 			user_id BIGINT NOT NULL,
 			name TEXT NOT NULL,
 			filepath TEXT NOT NULL
@@ -34,15 +36,15 @@ func NewChatsRepository() (*ChatsRepository, error) {
 	return &ChatsRepository{db: db}, nil
 }
 
-func (cr *ChatsRepository) AddChat(userId int64, name string, filepath string) error {
+func (cr *ChatsRepository) CreateChat(chatId string, userId int64, name string, filepath string) error {
 	_, err := cr.db.Exec(
-		"INSERT INTO chats (user_id, name, filepath) VALUES (?, ?, ?)",
-		userId, name, filepath,
+		"INSERT INTO chats (id, user_id, name, filepath) VALUES (?, ?, ?, ?)",
+		chatId, userId, name, filepath,
 	)
 	return err
 }
 
-func (cr *ChatsRepository) RemoveChat(chatId int64) error {
+func (cr *ChatsRepository) RemoveChat(chatId string) error {
 	_, err := cr.db.Exec(
 		"DELETE FROM chats WHERE id = ?",
 		chatId,
@@ -78,26 +80,7 @@ func (cr *ChatsRepository) GetUserChats(userId int64) ([]model.Chat, error) {
 	return chats, nil
 }
 
-func (cr *ChatsRepository) GetChat(chatId int64) (*model.Chat, error) {
-	row := cr.db.QueryRow(
-		"SELECT id, user_id, name, filepath FROM chats WHERE id = ?",
-		chatId,
-	)
-
-	var chat model.Chat
-	err := row.Scan(&chat.Id, &chat.UserId, &chat.Name, &chat.Filepath)
-
-	switch err {
-	case nil:
-		return &chat, nil
-	case sql.ErrNoRows:
-		return nil, nil
-	default:
-		return nil, err
-	}
-}
-
-func (cr *ChatsRepository) RenameChat(chatId int64, newName string) error {
+func (cr *ChatsRepository) RenameChat(chatId string, newName string) error {
 	_, err := cr.db.Exec(
 		"UPDATE chats SET name = ? WHERE id = ?",
 		newName, chatId,
