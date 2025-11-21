@@ -54,9 +54,13 @@ func (chatOperationsHandler *ChatOperationsHandler) SetupHandlers() {
 }
 
 func (chatOperationsHandler *ChatOperationsHandler) handleRouteFunction(telebotCtx telebot.Context) error {
-	data := telebotCtx.Callback().Unique
+	data := telebotCtx.Callback().Data
 
-	routedFunc, ok := chatOperationsHandler.btnRouteController.GetRoute(data)
+	cleanData := strings.TrimLeftFunc(data, func(r rune) bool {
+		return r < 32
+	})
+
+	routedFunc, ok := chatOperationsHandler.btnRouteController.GetRoute(cleanData)
 	if !ok {
 		fmt.Printf("found unexpected route: %s\n", data)
 		return nil
