@@ -72,9 +72,13 @@ func (chatOperationsHandler *ChatOperationsHandler) handleRouteFunction(telebotC
 func (chatOperationsHandler *ChatOperationsHandler) dropUserToRootMenu(telebotCtx telebot.Context, err error) error {
 	telegramUser := telebotCtx.Sender()
 
-	user, err := chatOperationsHandler.userController.GetUser(telegramUser.ID)
-
 	menu := controller.CreateRootMenu()
+
+	if err != nil {
+		return telebotCtx.Send("Возникла ошибка, попробуйте позже", menu)
+	}
+
+	user, err := chatOperationsHandler.userController.GetUser(telegramUser.ID)
 
 	if err != nil {
 		return telebotCtx.Send("Возникла ошибка, попробуйте позже", menu)
@@ -171,7 +175,12 @@ func (chatOperationsHandler *ChatOperationsHandler) handleDocument(telebotCtx te
 		return chatOperationsHandler.dropUserToRootMenu(telebotCtx, fmt.Errorf(UnexpectedFileFormat))
 	}
 
-	err = chatOperationsHandler.chatController.CreateChat(document.UniqueID, user.TelegramId, user.NewChatName, document.File)
+	reader, err := chatOperationsHandler.bot.File(&document.File)
+	if err != nil {
+		return chatOperationsHandler.dropUserToRootMenu(telebotCtx, err)
+	}
+
+	err = chatOperationsHandler.chatController.CreateChat(document.UniqueID, user.TelegramId, user.NewChatName, reader)
 	if err != nil {
 		return chatOperationsHandler.dropUserToRootMenu(telebotCtx, err)
 	}
@@ -235,15 +244,18 @@ func (chatOperationsHandler *ChatOperationsHandler) handleChatButton(telebotCtx 
 		return chatOperationsHandler.dropUserToRootMenu(telebotCtx, err)
 	}
 
-	var currChat *model.Chat
 	for _, chat := range importedChats {
 		if chat.Id == chatId {
-			currChat = &chat
+			user.SelectedChat = &model.Chat{
+				Id:       chat.Id,
+				UserId:   chat.UserId,
+				Name:     chat.Name,
+				Filepath: chat.Filepath,
+			}
 		}
 		chatOperationsHandler.btnRouteController.DeleteRoute(fmt.Sprintf("chat_id_%s", chat.Id))
 	}
 
-	user.SelectedChat = currChat
 	user.State = model.StateChatInteractionTypeAwaiting
 
 	menu := controller.CreateAvailableChatInteractions()

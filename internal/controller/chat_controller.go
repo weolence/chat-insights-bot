@@ -5,11 +5,8 @@ import (
 	"io"
 	"main/internal/model"
 	"main/internal/repository"
-	"net/http"
 	"os"
 	"path/filepath"
-
-	"gopkg.in/telebot.v3"
 )
 
 const (
@@ -29,14 +26,10 @@ func NewChatController() (*ChatController, error) {
 	return &ChatController{chatsRepo: chatsRepo}, nil
 }
 
-func (cc *ChatController) CreateChat(chatId string, userId int64, name string, file telebot.File) error {
-	resp, err := http.Get(file.FileURL)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
+func (cc *ChatController) CreateChat(chatId string, userId int64, name string, fileFromTelegramServerReader io.ReadCloser) error {
+	defer fileFromTelegramServerReader.Close()
 
-	path := fmt.Sprintf("./%s/%d/%s.%s", chatsStorageDir, userId, file.UniqueID, FileFormat)
+	path := fmt.Sprintf("./%s/%d/%s.%s", chatsStorageDir, userId, chatId, FileFormat)
 
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
@@ -48,7 +41,7 @@ func (cc *ChatController) CreateChat(chatId string, userId int64, name string, f
 	}
 	defer out.Close()
 
-	if _, err = io.Copy(out, resp.Body); err != nil {
+	if _, err = io.Copy(out, fileFromTelegramServerReader); err != nil {
 		return err
 	}
 
