@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"log"
 	"main/internal/model"
 	"os"
 
@@ -11,7 +12,8 @@ import (
 )
 
 const (
-	baseApiUrl = "https://api.naga.ac/v1"
+	baseApiUrl   = "https://openrouter.ai/api/v1"
+	currentModel = openai.ChatModel("x-ai/grok-4.1-fast:free")
 )
 
 type LlmController struct {
@@ -39,7 +41,7 @@ func (lc *LlmController) SummarizeChat(ctx context.Context, chat model.Chat) (st
 	}
 
 	chatCompletion, err := lc.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
-		Model: openai.ChatModelGPT4o,
+		Model: currentModel,
 		Messages: []openai.ChatCompletionMessageParamUnion{
 			openai.SystemMessage(`
 				Ты — аналитик переписок. 
@@ -64,6 +66,8 @@ func (lc *LlmController) SummarizeChat(ctx context.Context, chat model.Chat) (st
 		},
 	})
 
+	log.Println("LLM error:", err, "chatCompletion:", chatCompletion)
+
 	if err != nil || len(chatCompletion.Choices) == 0 {
 		return "", err
 	}
@@ -78,7 +82,7 @@ func (lc *LlmController) DescribePersonality(ctx context.Context, chat model.Cha
 	}
 
 	chatCompletion, err := lc.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
-		Model: openai.ChatModelGPT4o,
+		Model: currentModel,
 		Messages: []openai.ChatCompletionMessageParamUnion{
 			openai.SystemMessage(`
 				Ты – аналитик переписок. 
@@ -117,7 +121,7 @@ func (lc *LlmController) MeetingSearch(ctx context.Context, chat model.Chat) (st
 	}
 
 	chatCompletion, err := lc.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
-		Model: openai.ChatModelGPT4o,
+		Model: currentModel,
 		Messages: []openai.ChatCompletionMessageParamUnion{
 			openai.SystemMessage(`
 				Ты — аналитик переписок.
@@ -155,7 +159,7 @@ func (lc *LlmController) ContextSearch(ctx context.Context, chat model.Chat, des
 	}
 
 	chatCompletion, err := lc.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
-		Model: openai.ChatModelGPT4o,
+		Model: currentModel,
 		Messages: []openai.ChatCompletionMessageParamUnion{
 			openai.SystemMessage(`
 				Ты — аналитик переписок.

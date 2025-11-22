@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+	"log"
 	"main/internal/controller"
 	"main/internal/model"
 	"path/filepath"
@@ -56,9 +57,7 @@ func (chatOperationsHandler *ChatOperationsHandler) SetupHandlers() {
 func (chatOperationsHandler *ChatOperationsHandler) handleRouteFunction(telebotCtx telebot.Context) error {
 	data := telebotCtx.Callback().Data
 
-	cleanData := strings.TrimLeftFunc(data, func(r rune) bool {
-		return r < 32
-	})
+	cleanData := strings.TrimSpace(data)
 
 	routedFunc, ok := chatOperationsHandler.btnRouteController.GetRoute(cleanData)
 	if !ok {
@@ -66,27 +65,29 @@ func (chatOperationsHandler *ChatOperationsHandler) handleRouteFunction(telebotC
 		return nil
 	}
 
+	telebotCtx.Respond()
 	return routedFunc(telebotCtx)
 }
 
-func (chatOperationsHandler *ChatOperationsHandler) dropUserToRootMenu(telebotCtx telebot.Context, err error) error {
+func (chatOperationsHandler *ChatOperationsHandler) dropUserToRootMenu(telebotCtx telebot.Context, botError error) error {
 	telegramUser := telebotCtx.Sender()
 
 	menu := controller.CreateRootMenu()
 
-	if err != nil {
-		return telebotCtx.Send("Возникла ошибка, попробуйте позже", menu)
-	}
-
+	log.Println(botError)
 	user, err := chatOperationsHandler.userController.GetUser(telegramUser.ID)
-
-	if err != nil {
-		return telebotCtx.Send("Возникла ошибка, попробуйте позже", menu)
-	}
 
 	user.State = model.StateRootMenu
 	user.SelectedChat = nil
 	user.NewChatName = ""
+
+	if err != nil {
+		return telebotCtx.Send("Возникла ошибка, попробуйте позже", menu)
+	}
+
+	if botError != nil {
+		return telebotCtx.Send("Возникла ошибка, попробуйте позже", menu)
+	}
 
 	return telebotCtx.Send("Выберите действие:", menu)
 }
@@ -133,12 +134,20 @@ func (chatOperationsHandler *ChatOperationsHandler) handleText(telebotCtx telebo
 	case model.StateDescriptionForContextSearchAwaiting:
 		description := telebotCtx.Text()
 
+		statusMsg, err := telebotCtx.Bot().Send(telebotCtx.Chat(), "Выполняется поиск контекста. Пожалуйста подождите...")
+		if err != nil {
+			return err
+		}
+
 		answer, err := chatOperationsHandler.llmController.ContextSearch(context.TODO(), *user.SelectedChat, description)
 		if err != nil {
 			return chatOperationsHandler.dropUserToRootMenu(telebotCtx, err)
 		}
 
-		telebotCtx.Send(fmt.Sprintf("Результаты поиска контекста:\n%s", answer))
+		_, err = telebotCtx.Bot().Edit(statusMsg, fmt.Sprintf("Результаты поиска контекста:\n%s", answer))
+		if err != nil {
+			return err
+		}
 
 		return chatOperationsHandler.dropUserToRootMenu(telebotCtx, nil)
 	case model.StateNewNameForChatAwaiting:
@@ -237,7 +246,7 @@ func (chatOperationsHandler *ChatOperationsHandler) handleChatButton(telebotCtx 
 		return chatOperationsHandler.dropUserToRootMenu(telebotCtx, fmt.Errorf(UnexpectedUserState))
 	}
 
-	chatId := strings.TrimPrefix(telebotCtx.Callback().Data, "chat_id_")
+	chatId := strings.TrimPrefix(strings.TrimSpace(telebotCtx.Callback().Data), "chat_id_")
 
 	importedChats, err := chatOperationsHandler.chatController.GetUserChats(*user)
 	if err != nil {
@@ -300,12 +309,20 @@ func (chatOperationsHandler *ChatOperationsHandler) handleSummarizeChat(telebotC
 		return chatOperationsHandler.dropUserToRootMenu(telebotCtx, fmt.Errorf(UnexpectedUserState))
 	}
 
+	statusMsg, err := telebotCtx.Bot().Send(telebotCtx.Chat(), "Выполняется анализ. Пожалуйста подождите...")
+	if err != nil {
+		return err
+	}
+
 	answer, err := chatOperationsHandler.llmController.SummarizeChat(context.TODO(), *user.SelectedChat)
 	if err != nil {
 		return chatOperationsHandler.dropUserToRootMenu(telebotCtx, err)
 	}
 
-	telebotCtx.Send(fmt.Sprintf("Результаты подытоживания чата:\n%s", answer))
+	_, err = telebotCtx.Bot().Edit(statusMsg, fmt.Sprintf("Результаты подытоживания чата:\n%s", answer))
+	if err != nil {
+		return err
+	}
 
 	return chatOperationsHandler.dropUserToRootMenu(telebotCtx, nil)
 }
@@ -327,12 +344,20 @@ func (chatOperationsHandler *ChatOperationsHandler) handleMeetingSearch(telebotC
 		return chatOperationsHandler.dropUserToRootMenu(telebotCtx, fmt.Errorf(UnexpectedUserState))
 	}
 
+	statusMsg, err := telebotCtx.Bot().Send(telebotCtx.Chat(), "Выполняется поиск встреч. Пожалуйста подождите...")
+	if err != nil {
+		return err
+	}
+
 	answer, err := chatOperationsHandler.llmController.MeetingSearch(context.TODO(), *user.SelectedChat)
 	if err != nil {
 		return chatOperationsHandler.dropUserToRootMenu(telebotCtx, err)
 	}
 
-	telebotCtx.Send(fmt.Sprintf("Результаты поиска встреч:\n%s", answer))
+	_, err = telebotCtx.Bot().Edit(statusMsg, fmt.Sprintf("Результаты поиска встреч:\n%s", answer))
+	if err != nil {
+		return err
+	}
 
 	return chatOperationsHandler.dropUserToRootMenu(telebotCtx, nil)
 }
@@ -354,12 +379,20 @@ func (chatOperationsHandler *ChatOperationsHandler) handleDescribePersonality(te
 		return chatOperationsHandler.dropUserToRootMenu(telebotCtx, fmt.Errorf(UnexpectedUserState))
 	}
 
+	statusMsg, err := telebotCtx.Bot().Send(telebotCtx.Chat(), "Выполняется анализ личности. Пожалуйста подождите...")
+	if err != nil {
+		return err
+	}
+
 	answer, err := chatOperationsHandler.llmController.DescribePersonality(context.TODO(), *user.SelectedChat)
 	if err != nil {
 		return chatOperationsHandler.dropUserToRootMenu(telebotCtx, err)
 	}
 
-	telebotCtx.Send(fmt.Sprintf("Описание личности:\n%s", answer))
+	_, err = telebotCtx.Bot().Edit(statusMsg, fmt.Sprintf("Описание личности:\n%s", answer))
+	if err != nil {
+		return err
+	}
 
 	return chatOperationsHandler.dropUserToRootMenu(telebotCtx, nil)
 }
@@ -433,6 +466,7 @@ func (chatOperationsHandler *ChatOperationsHandler) handleRemoveChat(telebotCtx 
 	telegramUser := telebotCtx.Sender()
 
 	user, err := chatOperationsHandler.userController.GetUser(telegramUser.ID)
+
 	if err != nil || user == nil {
 		return chatOperationsHandler.dropUserToRootMenu(telebotCtx, err)
 	}

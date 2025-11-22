@@ -25,7 +25,6 @@ func (commandsHandler *CommandsHandler) handleStartMessage(c telebot.Context) er
 
 	user, err := commandsHandler.userController.GetUser(telegramUser.ID)
 	if err != nil {
-
 		return c.Send("Возникла ошибка во время регистрации, попробуйте позже")
 	}
 

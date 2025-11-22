@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"log"
 	"main/internal/model"
 	"main/internal/repository"
 
@@ -49,12 +50,14 @@ func (uc *UserController) CreateUser(telegramId int64) (*model.User, error) {
 }
 
 /*
-if user not registered in database nil will ber returned,
+if user not registered in database nil will be returned,
 in case user registered in database, but not in table
 of current users, User struct will be fetched in it and returned
 */
 func (uc *UserController) GetUser(telegramId int64) (*model.User, error) {
-	if user, ok := uc.currUsers.Get(telegramId); ok {
+	user, ok := uc.currUsers.Get(telegramId)
+	log.Println(user, ok)
+	if ok {
 		return user, nil
 	}
 
@@ -66,7 +69,7 @@ func (uc *UserController) GetUser(telegramId int64) (*model.User, error) {
 		return nil, nil
 	}
 
-	user := &model.User{
+	user = &model.User{
 		TelegramId: telegramId,
 		State:      model.StateRootMenu,
 	}
