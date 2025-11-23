@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"log"
 	"main/internal/model"
 	"main/internal/repository"
 
@@ -56,7 +55,6 @@ of current users, User struct will be fetched in it and returned
 */
 func (uc *UserController) GetUser(telegramId int64) (*model.User, error) {
 	user, ok := uc.currUsers.Get(telegramId)
-	log.Println(user, ok)
 	if ok {
 		return user, nil
 	}

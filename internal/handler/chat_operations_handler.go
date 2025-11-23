@@ -74,7 +74,6 @@ func (chatOperationsHandler *ChatOperationsHandler) dropUserToRootMenu(telebotCt
 
 	menu := controller.CreateRootMenu()
 
-	log.Println(botError)
 	user, err := chatOperationsHandler.userController.GetUser(telegramUser.ID)
 
 	user.State = model.StateRootMenu
@@ -82,10 +81,12 @@ func (chatOperationsHandler *ChatOperationsHandler) dropUserToRootMenu(telebotCt
 	user.NewChatName = ""
 
 	if err != nil {
+		log.Println(err)
 		return telebotCtx.Send("Возникла ошибка, попробуйте позже", menu)
 	}
 
 	if botError != nil {
+		log.Println(botError)
 		return telebotCtx.Send("Возникла ошибка, попробуйте позже", menu)
 	}
 

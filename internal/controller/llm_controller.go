@@ -3,7 +3,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"log"
 	"main/internal/model"
 	"os"
 
@@ -13,7 +12,7 @@ import (
 
 const (
 	baseApiUrl   = "https://openrouter.ai/api/v1"
-	currentModel = openai.ChatModel("x-ai/grok-4.1-fast:free")
+	currentModel = openai.ChatModel("openai/gpt-oss-20b:free")
 )
 
 type LlmController struct {
@@ -48,6 +47,7 @@ func (lc *LlmController) SummarizeChat(ctx context.Context, chat model.Chat) (st
 				Твоя задача — кратко и чётко выделять обсуждения и темы.
 				Пиши лаконично, без воды, без специальных символов, эмодзи и лишних фраз.
 				Стиль деловой, структурированный, с акцентом на ключевые моменты.
+				Отвечай в формате текста, если хочешь как-то структурировать вывод, то используй нумерацию.
 			`),
 			openai.UserMessage(fmt.Sprintf("Вот переписка для анализа:\n\n%s", string(data))),
 			openai.UserMessage(`
@@ -65,8 +65,6 @@ func (lc *LlmController) SummarizeChat(ctx context.Context, chat model.Chat) (st
 			),
 		},
 	})
-
-	log.Println("LLM error:", err, "chatCompletion:", chatCompletion)
 
 	if err != nil || len(chatCompletion.Choices) == 0 {
 		return "", err
@@ -89,6 +87,7 @@ func (lc *LlmController) DescribePersonality(ctx context.Context, chat model.Cha
 				Твоя задача – объективно анализировать поведение людей на основе чата. 
 				Пиши кратко, строго по делу, без лишних фраз вроде “Понял”, “Конечно” и т.п.
 				Не используй спецсимволы, эмодзи и украшения.
+				Отвечай в формате текста, если хочешь как-то структурировать вывод, то используй нумерацию.
 			`),
 			openai.UserMessage(fmt.Sprintf("Вот переписка для анализа:\n\n%s", string(data))),
 			openai.UserMessage(`
@@ -128,6 +127,7 @@ func (lc *LlmController) MeetingSearch(ctx context.Context, chat model.Chat) (st
 				Твоя задача — находить факты о встречах и событиях на основе контекста.
 				Отвечай кратко, структурировано и строго по делу.
 				Не используй спецсимволы, эмодзи, вводные фразы или воду.
+				Отвечай в формате текста, если хочешь как-то структурировать вывод, то используй нумерацию.
 			`),
 			openai.UserMessage(fmt.Sprintf("Вот переписка для анализа:\n\n%s", string(data))),
 			openai.UserMessage(`
@@ -167,6 +167,7 @@ func (lc *LlmController) ContextSearch(ctx context.Context, chat model.Chat, des
 				Пиши строго по делу, кратко, без воды и без специальных символов, эмодзи.
 				Не используй вводные фразы вроде "Понял" или "Я считаю".
 				Только анализ и факты из переписки.
+				Отвечай в формате текста, если хочешь как-то структурировать вывод, то используй нумерацию.
 			`),
 			openai.UserMessage(fmt.Sprintf("Вот переписка для анализа:\n\n%s", string(data))),
 			openai.UserMessage(fmt.Sprintf(`
